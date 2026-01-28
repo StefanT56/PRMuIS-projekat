@@ -1,0 +1,14 @@
+﻿using Domain.Poruke;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Domain.Servisi
+{
+    public interface IMessageHandler
+    {
+        void Handle(NetworkMessage poruka);
+    }
+}
