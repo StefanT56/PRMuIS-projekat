@@ -13,7 +13,7 @@ namespace Domain.Modeli
         public string Naziv;
         public int Kolicina;
         public OrderItemType Tip;
-        // true-pice false-hrana 
+          
         public OrderItem() { }  
     }
 }
