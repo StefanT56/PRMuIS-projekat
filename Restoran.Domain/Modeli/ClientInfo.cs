@@ -13,6 +13,7 @@ namespace Domain.Modeli
         public int Id;
         public ClientRole role;
         public string ImeZaposlenog; //opciono 
+        public bool zauzet;
 
         public ClientInfo() { }
         public ClientInfo(int id , ClientRole r,string ime)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Enumi;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,5 +11,7 @@ namespace Domain.Poruke
     public class TaskDoneRequest
     {
         public int TaskId; // id zadatka koji je zavrsen 
+        public int BrojStola;
+        public OrderItemType Tip;
     }
 }

@@ -46,6 +46,9 @@
     <Compile Include="Servisi\ClientMessageListener.cs" />
     <Compile Include="Servisi\ClientSession.cs" />
     <Compile Include="Servisi\ConsoleMessageHandler.cs" />
+    <Compile Include="Servisi\IOrderNotifier.cs" />
+    <Compile Include="Servisi\IServerState1.cs" />
+    <Compile Include="Servisi\OrderDispatcher.cs" />
     <Compile Include="Servisi\Konobar\KonobarCommands.cs" />
     <Compile Include="Servisi\WorkerCommands.cs" />
   </ItemGroup>

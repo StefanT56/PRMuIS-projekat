@@ -12,8 +12,9 @@ namespace Domain.Modeli
     {
         public int Broj;
         public int Kapacitet;
+        public int BrojGostiju;
         public TableType Zauzetost;
-
+        public List<Order> Porudzbine;
         public Table() { }
         public Table(int broj,int kapacitet)
         {

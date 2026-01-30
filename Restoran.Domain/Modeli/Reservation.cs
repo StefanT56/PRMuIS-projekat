@@ -14,6 +14,9 @@ namespace Domain.Modeli
         public int BrojStola;
         public DateTime VrijemePocetak;
         public DateTime VrijemeKraj;
+
+        public bool IsActive(DateTime now) => now >= VrijemePocetak && now < VrijemeKraj;
+        public bool IsExpired(DateTime now) => now >= VrijemeKraj;
         public Reservation() { } 
         public Reservation(int id,string ime,int brStola,DateTime od,DateTime doo)
         {
