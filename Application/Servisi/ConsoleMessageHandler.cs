@@ -48,7 +48,7 @@ namespace Application.Servisi
             {
                 itemText = payload.stavka.Naziv + " x " + payload.stavka.cena + " [" + payload.stavka.Kategorija + "] ";
             }
-            Console.WriteLine("[TASK] Assigned: TaskId=" + payload.TaskId +", Table=" + payload.BrojStola +", Item=" + itemText);
+            Console.WriteLine("[TASK] Assigned: TaskId=" + payload.TaskId +", Sto=" + payload.BrojStola +", Item=" + itemText);
         }
         private void HandleOrderReady(object data)
         {

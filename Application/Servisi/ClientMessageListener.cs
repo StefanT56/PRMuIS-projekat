@@ -16,7 +16,7 @@ namespace Application.Servisi
         private readonly IObjectSerializer _serializacija;
         private readonly IMessageHandler _handler;
 
-        private Thread _thread;
+        private Thread _thread;  
         private bool _running;
         private readonly int _idleSleepMs;
 

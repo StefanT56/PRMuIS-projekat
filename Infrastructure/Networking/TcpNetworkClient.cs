@@ -36,7 +36,9 @@ namespace Infrastructure.Networking
                 _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(serverAddress), port);
                 _socket.Connect(serverEndPoint);
-            }catch
+                _socket.Blocking = false;
+            }
+            catch
             {
                 Disconnect();
             }
@@ -105,17 +107,30 @@ namespace Infrastructure.Networking
         }
         public bool TryReceive(out byte[] data)
         {
-            data = new byte[0];
+            data = Array.Empty<byte>();
             if (_socket == null || !_socket.Connected) return false;
 
-            if (!_socket.Poll(1000 * 1000, SelectMode.SelectRead)) return false;
-            byte[] buffer = new byte[8192];
-            int bytesRead = _socket.Receive(buffer);
-            if (bytesRead <= 0) return false;
+            try
+            {
+                
+                if (!_socket.Poll(100 * 1000, SelectMode.SelectRead)) return false;
 
-            data = new byte[bytesRead];
-            Buffer.BlockCopy(buffer, 0, data, 0, bytesRead);
-            return true;
+                int bytesRead = _socket.Receive(_dolaziBuffer);
+                if (bytesRead <= 0)
+                {
+                    Disconnect();
+                    return false;
+                }
+
+                data = new byte[bytesRead];
+                Buffer.BlockCopy(_dolaziBuffer, 0, data, 0, bytesRead);
+                return true;
+            }
+            catch
+            {
+                Disconnect();
+                return false;
+            }
 
 
         }
