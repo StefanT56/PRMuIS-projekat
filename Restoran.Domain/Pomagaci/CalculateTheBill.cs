@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Enumi
+namespace Domain.Pomagaci
 {
-    public enum TableType
+    internal class CalculateTheBill
     {
-        ZAUZET,
-        SLOBODAN,
-        REZERVISAN
+
     }
 }

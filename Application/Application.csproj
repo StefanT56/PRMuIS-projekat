@@ -44,6 +44,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Servisi\ClientMessageListener.cs" />
     <Compile Include="Servisi\ConsoleMessageHandler.cs" />
+    <Compile Include="Servisi\IOrderNotifier.cs" />
+    <Compile Include="Servisi\IServerState1.cs" />
+    <Compile Include="Servisi\OrderDispatcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="DTOs\" />

@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace Domain.Enumi
 {
-    public enum TableType
+    public enum ClientStatus
     {
-        ZAUZET,
-        SLOBODAN,
-        REZERVISAN
+        Slobodan,
+        Zauzet
     }
 }

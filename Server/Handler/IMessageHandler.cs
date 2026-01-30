@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Enumi
+namespace Server.Handler
 {
-    public enum TableType
+    public interface IMessageHandler
     {
-        ZAUZET,
-        SLOBODAN,
-        REZERVISAN
+        string Handle(int clientId, string message);
     }
 }

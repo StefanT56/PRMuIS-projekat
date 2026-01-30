@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace Domain.Enumi
 {
-    public enum TableType
+    public enum OrderStatus
     {
-        ZAUZET,
-        SLOBODAN,
-        REZERVISAN
+        UPripremi,
+        Spremno,
+        Dostavljeno,
+        Kreirana
     }
 }

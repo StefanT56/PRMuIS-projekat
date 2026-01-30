@@ -13,16 +13,20 @@ namespace Infrastructure.Serializacija
     {
         public object Deserialize(byte[] data)
         {
-            if (data == null || data.Length == 0) return Array.Empty<byte>();
+            if (data == null || data.Length == 0)
+                return null;
             try
             {
                 BinaryFormatter formatter = new BinaryFormatter();
-                using(MemoryStream ms = new MemoryStream())
+                using(MemoryStream ms = new MemoryStream(data))
                 {
+#pragma warning disable SYSLIB0011
                     return formatter.Deserialize(ms);
+#pragma warning disable SYSLIB0011
                 }
 
-            }catch
+            }
+            catch
             {
                 return null;
             }

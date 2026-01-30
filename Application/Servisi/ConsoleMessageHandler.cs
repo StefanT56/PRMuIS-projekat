@@ -46,7 +46,7 @@ namespace Application.Servisi
             string itemText = " ";
             if(payload.stavka != null)
             {
-                itemText = payload.stavka.Naziv + " x " + payload.stavka.Kolicina + " [" + payload.stavka.Tip + "] ";
+                itemText = payload.stavka.Naziv + " x " + payload.stavka.cena + " [" + payload.stavka.Kategorija + "] ";
             }
             Console.WriteLine("[TASK] Assigned: TaskId=" + payload.TaskId +", Table=" + payload.BrojStola +", Item=" + itemText);
         }
