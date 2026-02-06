@@ -4,15 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C3D4E5F6-A7B8-9012-CDEF-123456789012}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Application</RootNamespace>
-    <AssemblyName>Application</AssemblyName>
+    <ProjectGuid>{B8C9D0E1-F2G3-4567-HIJK-678901234567}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ManagerClient</RootNamespace>
+    <AssemblyName>ManagerClient</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -28,19 +29,19 @@
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}</Project>
-      <Name>Core</Name>
+      <n>Core</n>
     </ProjectReference>
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj">
       <Project>{B2C3D4E5-F6A7-8901-BCDE-F12345678901}</Project>
-      <Name>Infrastructure</Name>
+      <n>Infrastructure</n>
+    </ProjectReference>
+    <ProjectReference Include="..\Application\Application.csproj">
+      <Project>{C3D4E5F6-A7B8-9012-CDEF-123456789012}</Project>
+      <n>Application</n>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Services\ServisSlanjaNaPripremu.cs" />
-    <Compile Include="Services\ServisNotifikacija.cs" />
-    <Compile Include="Services\ServisUpravljanjaMenadzerom.cs" />
-    <Compile Include="Services\ServisOslobadjanjaStolovaMenadzer.cs" />
-    <Compile Include="UI\ConsoleUI.cs" />
+    <Compile Include="Menadzer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
