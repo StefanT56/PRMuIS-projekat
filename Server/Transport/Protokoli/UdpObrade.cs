@@ -40,6 +40,9 @@ namespace Server
                     DateTime vremeOd = DateTime.Parse(delovi[2]);
                     DateTime vremeDo = DateTime.Parse(delovi[3]);
 
+                    // 🐛 DEBUG: Ispis parsiranih vremena
+                    Console.WriteLine(string.Format("[DEBUG] Parsirana vremena: vremeOd={0:yyyy-MM-dd HH:mm}, vremeDo={1:yyyy-MM-dd HH:mm}", vremeOd, vremeDo));
+
                     int? zeljeniSto = null;
                     if (delovi.Length >= 5 && int.TryParse(delovi[4], out int sto))
                     {
@@ -64,12 +67,16 @@ namespace Server
                     {
                         var stoZaRezervaciju = slobodni.First();
                         stoZaRezervaciju.Stanje = Status.rezervisan;  // ✅ REZERVISAN (ne zauzet)
-                        RepozitorijumStolova.AzurirajSto(stoZaRezervaciju);
 
                         // Kreiraj jedinstveni ID rezervacije
                         int rezervacijaId = Math.Abs(DateTime.Now.GetHashCode() % 100000);
 
-                        repozitorijumMenadzera.DodajNovuRezervaciju(rezervacijaId, stoZaRezervaciju.BrojStola);
+                        // Veži sto sa rezervacijom da ServerVizualizacija može da prikaže vreme.
+                        stoZaRezervaciju.RezervacijaId = rezervacijaId;
+                        RepozitorijumStolova.AzurirajSto(stoZaRezervaciju);
+
+                        // Čuvamo rezervaciju na serveru (repo koristi process-wide storage)
+                        repozitorijumMenadzera.DodajNovuRezervaciju(rezervacijaId, stoZaRezervaciju.BrojStola, vremeOd, vremeDo, brGostiju);
 
                         MrezniSlusaoci.PosaljiUdp(udp, udaljeni, string.Format("OK;{0};{1}", rezervacijaId, stoZaRezervaciju.BrojStola));
                         Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("Rezervisan sto {0} (Rez #{1}, {2:HH:mm}-{3:HH:mm})",
@@ -95,54 +102,18 @@ namespace Server
 
                     if (slobodni.Any())
                     {
-                        var sto = slobodni.First();
-                        sto.Stanje = Status.zauzet; // ✅ ZAUZET za goste koji su tu
-                        RepozitorijumStolova.AzurirajSto(sto);
+                        var stoZaZauzimanje = slobodni.First();
+                        stoZaZauzimanje.Stanje = Status.zauzet;
+                        RepozitorijumStolova.AzurirajSto(stoZaZauzimanje);
 
-                        MrezniSlusaoci.PosaljiUdp(udp, udaljeni, string.Format("OK;{0}", sto.BrojStola));
-                        Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("Dodeljen sto {0} ({1} gostiju)", sto.BrojStola, brGostiju));
+                        MrezniSlusaoci.PosaljiUdp(udp, udaljeni, string.Format("OK;{0}", stoZaZauzimanje.BrojStola));
+                        Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("Zauzet sto {0} (konobar)", stoZaZauzimanje.BrojStola));
                     }
                     else
                     {
                         MrezniSlusaoci.PosaljiUdp(udp, udaljeni, "ERROR;Nema slobodnih stolova");
-                        Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("Nema slobodnih stolova za {0} gostiju", brGostiju));
+                        Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("Nema stolova za zauzimanje ({0} gostiju)", brGostiju));
                     }
-                }
-                return;
-            }
-
-            if (delovi[0] == "TAKE_TABLE")
-            {
-                // STARA LOGIKA - ostaje kao backup
-                if (delovi.Length < 5)
-                {
-                    MrezniSlusaoci.PosaljiUdp(udp, udaljeni, "TABLE_BUSY");
-                    return;
-                }
-
-                int brGostiju = int.Parse(delovi[2]);
-                int brojRezervacije = int.Parse(delovi[4]);
-
-                var slobodni = RepozitorijumStolova.DobaviSveStolove()
-                    .Where(s => s.Stanje == Status.slobodan && s.BrojGostiju >= brGostiju)
-                    .OrderBy(s => s.BrojGostiju)
-                    .ToList();
-
-                if (slobodni.Any())
-                {
-                    var sto = slobodni.First();
-                    sto.Stanje = Status.rezervisan;
-                    RepozitorijumStolova.AzurirajSto(sto);
-
-                    repozitorijumMenadzera.DodajNovuRezervaciju(brojRezervacije, sto.BrojStola);
-
-                    MrezniSlusaoci.PosaljiUdp(udp, udaljeni, string.Format("TABLE_FREE;{0}", sto.BrojStola));
-                    Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("Rezervisan sto {0} (Rezervacija #{1})", sto.BrojStola, brojRezervacije));
-                }
-                else
-                {
-                    MrezniSlusaoci.PosaljiUdp(udp, udaljeni, "TABLE_BUSY");
-                    Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("Nema stolova za rezervaciju #{0}", brojRezervacije));
                 }
             }
         }
@@ -157,39 +128,81 @@ namespace Server
             RepozitorijumStolova.OcistiSto(brojStola);
 
             MrezniSlusaoci.PosaljiUdp(udp, udaljeni, "OK");
-            Server.UI.ServerVizualizacija.DodajDogadjaj($"Oslobodjen sto {brojStola}");
+            Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("Oslobodjen sto {0}", brojStola));
         }
 
         public void ObradiProveruRezervacije(string poruka, EndPoint udaljeni, Socket udp)
         {
-            if (!int.TryParse(poruka.Trim(), out int rezervacijaKod))
+            poruka = (poruka ?? string.Empty).Trim();
+
+
+            string komanda = "USE_RESERVATION";
+            int rezervacijaKod;
+
+            if (poruka.Contains(";"))
             {
-                MrezniSlusaoci.PosaljiUdp(udp, udaljeni, "ERROR;Invalid reservation");
-                Console.WriteLine("[Rezervacije] Nevažeća poruka (nije broj).");
+                var delovi = poruka.Split(';');
+                if (delovi.Length < 2 || !int.TryParse(delovi[1], out rezervacijaKod))
+                {
+                    MrezniSlusaoci.PosaljiUdp(udp, udaljeni, "ERROR;Invalid request");
+                    Console.WriteLine("[Rezervacije] Nevažeća poruka (komanda;id).");
+                    return;
+                }
+
+                komanda = delovi[0].Trim().ToUpperInvariant();
+            }
+            else
+            {
+                if (!int.TryParse(poruka, out rezervacijaKod))
+                {
+                    MrezniSlusaoci.PosaljiUdp(udp, udaljeni, "ERROR;Invalid request");
+                    Console.WriteLine("[Rezervacije] Nevažeća poruka (nije broj).");
+                    return;
+                }
+            }
+
+            bool postoji = repozitorijumMenadzera.ProveriRezervaciju(rezervacijaKod);
+            if (!postoji)
+            {
+                MrezniSlusaoci.PosaljiUdp(udp, udaljeni, "ERROR;NotFound");
+                Console.WriteLine(string.Format("[Rezervacije] Rezervacija #{0} ne postoji.", rezervacijaKod));
                 return;
             }
 
-            bool validna = repozitorijumMenadzera.ProveriRezervaciju(rezervacijaKod);
-            if (!validna)
+            if (komanda == "CHECK_RESERVATION")
             {
-                MrezniSlusaoci.PosaljiUdp(udp, udaljeni, "ERROR;Invalid reservation");
-                Console.WriteLine($"[Rezervacije] Rezervacija #{rezervacijaKod} nije validna.");
+                var rez = repozitorijumMenadzera.DobaviRezervaciju(rezervacijaKod);
+                if (rez == null)
+                {
+                    MrezniSlusaoci.PosaljiUdp(udp, udaljeni, "ERROR;NotFound");
+                    return;
+                }
+
+                // OK;sto;vremeOd;vremeDo
+                string resp = string.Format("OK;{0};{1:yyyy-MM-dd HH:mm};{2:yyyy-MM-dd HH:mm}",
+                    rez.BrojStola, rez.VremeOd, rez.VremeDo);
+
+                MrezniSlusaoci.PosaljiUdp(udp, udaljeni, resp);
+                Console.WriteLine(string.Format("[Rezervacije] CHECK ok #{0} -> Sto {1} ({2:HH:mm}-{3:HH:mm})",
+                    rezervacijaKod, rez.BrojStola, rez.VremeOd, rez.VremeDo));
                 return;
             }
 
+            // USE_RESERVATION (gost stigao)
             int brStola = repozitorijumMenadzera.DobaviBrojStola(rezervacijaKod);
 
-             var sto = RepozitorijumStolova.DobaviPoId(brStola);
+            var sto = RepozitorijumStolova.DobaviPoId(brStola);
             if (sto != null && sto.Stanje == Status.rezervisan)
             {
                 sto.Stanje = Status.zauzet;
+                sto.RezervacijaId = null;
                 RepozitorijumStolova.AzurirajSto(sto);
             }
 
             repozitorijumMenadzera.UkloniRezervaciju(rezervacijaKod);
 
-            MrezniSlusaoci.PosaljiUdp(udp, udaljeni, $"OK;{brStola}");
-            Server.UI.ServerVizualizacija.DodajDogadjaj($"Rezervacija #{rezervacijaKod} potvrdjena - Sto {brStola} sada ZAUZET");
+            MrezniSlusaoci.PosaljiUdp(udp, udaljeni, string.Format("OK;{0}", brStola));
+            Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("Gost stigao - Rezervacija #{0} -> Sto {1} sada ZAUZET", rezervacijaKod, brStola));
 
             ObavestiMenadzera(rezervacijaKod);
         }
@@ -201,15 +214,15 @@ namespace Server
                 using (var notify = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
                 {
                     var menadzerEp = new IPEndPoint(IPAddress.Loopback, udpPortMenadzerNotifikacija);
-                    string poruka = $"RESERVATION_USED;{rezervacijaKod}";
+                    string poruka = string.Format("RESERVATION_USED;{0}", rezervacijaKod);
                     notify.SendTo(Encoding.UTF8.GetBytes(poruka), menadzerEp);
                 }
 
-                Console.WriteLine($"[Rezervacije] Menadžer obavešten (iskorišćena #{rezervacijaKod}).");
+                Console.WriteLine(string.Format("[Rezervacije] Menadžer obavešten (iskorišćena #{0}).", rezervacijaKod));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Rezervacije] Ne mogu da obavestim menadžera: {ex.Message}");
+                Console.WriteLine(string.Format("[Rezervacije] Ne mogu da obavestim menadžera: {0}", ex.Message));
             }
         }
     }
