@@ -17,6 +17,9 @@ namespace Server.UI
         private static readonly object dogadjajiLock = new object();
         private const int MAX_DOGADJAJA = 8;
 
+        // Repo is process-wide (uses static storage internally) - used only for visualization.
+        private static readonly RepozitorijumMenadzera repoMenadzera = new RepozitorijumMenadzera(1);
+
         public static void PokreniVizualizaciju()
         {
             vizualizacijaThread = new Thread(() =>
@@ -26,7 +29,7 @@ namespace Server.UI
                     try
                     {
                         PrikaziKompletnoPregledStanja();
-                        Thread.Sleep(10000); // Refresh svake 2 sekunde
+                        Thread.Sleep(5000); // Refresh svake 2 sekunde
                     }
                     catch (Exception ex)
                     {
@@ -168,50 +171,13 @@ namespace Server.UI
             }
 
             // ═══════════════════════════════════════════════════════════════════════
-            // REZERVACIJE
-            // ═══════════════════════════════════════════════════════════════════════
-
-            // SEKCIJA ZA REZERVACIJE (dodaj nakon aktivnih porudžbina)
-            var rezervisaniStolovi = stolovi.Where(s => s.Stanje == Status.rezervisan).ToList();
-
-            if (rezervisaniStolovi.Any())
-            {
-                Console.WriteLine();
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("================================================================================");
-                Console.WriteLine("                              AKTIVNE REZERVACIJE                              ");
-                Console.WriteLine("================================================================================");
-                Console.ResetColor();
-
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("Sto  | Kapacitet | Vreme rezervacije                    ");
-                Console.WriteLine("--------------------------------------------------------------------------------");
-                Console.ResetColor();
-
-                foreach (var sto in rezervisaniStolovi)
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Write("{0,-4} | ", sto.BrojStola);
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.Write("{0,-9} | ", sto.BrojGostiju);
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("{0:HH:mm} - {1:HH:mm}", DateTime.Now, DateTime.Now.AddHours(2));
-                    Console.ResetColor();
-                }
-
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("================================================================================");
-                Console.ResetColor();
-            }
-
-            // ═══════════════════════════════════════════════════════════════════════
-            // LOG DOGAĐAJA
+            // POSLEDNJI DOGAĐAJI
             // ═══════════════════════════════════════════════════════════════════════
 
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("================================================================================");
-            Console.WriteLine("                            POSLEDNJI DOGADJAJI                                 ");
+            Console.WriteLine("                              POSLEDNJI DOGADJAJI                               ");
             Console.WriteLine("================================================================================");
             Console.ResetColor();
 
@@ -220,41 +186,22 @@ namespace Server.UI
                 if (poslednjihDogadjaja.Count == 0)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("  Nema zabelezenih dogadjaja...");
+                    Console.WriteLine("  Nema dogadjaja.");
                     Console.ResetColor();
                 }
                 else
                 {
-                    foreach (var dogadjaj in poslednjihDogadjaja)
+                    foreach (var dog in poslednjihDogadjaja)
                     {
-                        Console.ForegroundColor = ConsoleColor.Gray;
-                        Console.WriteLine($"  {dogadjaj}");
-                        Console.ResetColor();
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine("  " + dog);
                     }
+                    Console.ResetColor();
                 }
             }
 
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("================================================================================");
-            Console.ResetColor();
-
-            // ═══════════════════════════════════════════════════════════════════════
-            // FOOTER
-            // ═══════════════════════════════════════════════════════════════════════
-
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write("Vreme: ");
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Write($"{DateTime.Now:HH:mm:ss dd.MM.yyyy}");
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write("                Server Status: ");
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("ONLINE");
-            Console.ResetColor();
-
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine("  [Pritisnite ENTER u glavnom prozoru za zaustavljanje servera]");
             Console.ResetColor();
         }
 
@@ -307,8 +254,18 @@ namespace Server.UI
 
             Console.Write("| ");
 
-            // Detalji o porudžbinama
-            if (sto.Porudzbine.Count > 0)
+            // Detalji (rezervacije / porudžbine)
+            if (sto.Stanje == Status.rezervisan && sto.RezervacijaId.HasValue)
+            {
+                var rez = repoMenadzera.DobaviRezervaciju(sto.RezervacijaId.Value);
+                Console.ForegroundColor = ConsoleColor.Yellow;
+
+                if (rez != null)
+                    Console.Write($"Rez#{rez.BrojRezervacije} {rez.VremeOd:HH:mm}-{rez.VremeDo:HH:mm}");
+                else
+                    Console.Write($"Rez#{sto.RezervacijaId.Value}");
+            }
+            else if (sto.Porudzbine.Count > 0)
             {
                 var upripremi = sto.Porudzbine.Count(p => p.statusArtikla == StatusArtikla.priprema);
                 var spremno = sto.Porudzbine.Count(p => p.statusArtikla == StatusArtikla.spremno);
@@ -333,26 +290,26 @@ namespace Server.UI
 
         private static void PrikaziRedPorudzbine(int brojStola, Porudzbina p)
         {
-           ConsoleColor statusBoja;
+            ConsoleColor statusBoja;
 
-switch (p.statusArtikla)
-{
-    case StatusArtikla.priprema:
-        statusBoja = ConsoleColor.Yellow;
-        break;
+            switch (p.statusArtikla)
+            {
+                case StatusArtikla.priprema:
+                    statusBoja = ConsoleColor.Yellow;
+                    break;
 
-    case StatusArtikla.spremno:
-        statusBoja = ConsoleColor.Green;
-        break;
+                case StatusArtikla.spremno:
+                    statusBoja = ConsoleColor.Green;
+                    break;
 
-    case StatusArtikla.dostavljeno:
-        statusBoja = ConsoleColor.Blue;
-        break;
+                case StatusArtikla.dostavljeno:
+                    statusBoja = ConsoleColor.Blue;
+                    break;
 
-    default:
-        statusBoja = ConsoleColor.Gray;
-        break;
-}
+                default:
+                    statusBoja = ConsoleColor.Gray;
+                    break;
+            }
 
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write($"{brojStola,-3} | ");

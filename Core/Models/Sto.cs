@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 namespace Core.Models
 {
-    public enum Status { slobodan, zauzet , rezervisan };
-    
+    public enum Status { slobodan, zauzet, rezervisan };
+
     [Serializable]
     public class Sto
     {
@@ -13,6 +13,8 @@ namespace Core.Models
         private int brojGostiju;
         private int zauzeoKonobar;
         private List<Porudzbina> porudzbine = new List<Porudzbina>();
+        public int? RezervacijaId { get; set; }
+
 
         public int BrojStola
         {

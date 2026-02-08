@@ -35,14 +35,14 @@ namespace Infrastructure.Repositories
                         lista.Add(p);
                     }
                 }
-                
+
                 return lista;
             }
         }
 
         public void ObrisiPorudzbinu(Porudzbina porudzbina)
         {
-           //
+            //
         }
 
         public int BrojPorudzbinaNaSteku()

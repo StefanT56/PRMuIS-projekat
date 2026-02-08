@@ -15,12 +15,12 @@ namespace Server
     class CentralniServer
     {
         private const int UDP_STOLOVI_PORT = 4000;  // port tacka 2
-        private const int UDP_OTKAZIVANJE_PORT = 4001; 
+        private const int UDP_OTKAZIVANJE_PORT = 4001;
         private const int TCP_RACUN_PORT = 4002; // TACKA 4 
         private const int UDP_PROVERA_REZERVACIJE_PORT = 4003;
-        
+
         private const int TCP_REGISTER_PORT = 5000; //Tacka 2 
-        private const int TCP_READY_PORT = 5001; 
+        private const int TCP_READY_PORT = 5001;
 
         private const int TCP_ORDER_PORT = 15000;
         private const int TCP_DOSTAVA_PORT = 4011;
@@ -60,7 +60,7 @@ namespace Server
             Console.WriteLine("[Server] Svi slusaoci su aktivni.");
             Console.WriteLine("[Server] Svi slusaoci su aktivni.");
 
-           
+
             var pokretac = new PokretacKlijenata();
             pokretac.PokreniViseKlijenata(2, TipOsoblja.Konobar);  //Pokretanje klijenata 
             pokretac.PokreniViseKlijenata(1, TipOsoblja.Kuvar);

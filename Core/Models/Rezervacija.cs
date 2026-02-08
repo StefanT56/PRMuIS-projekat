@@ -8,11 +8,11 @@ namespace Core.Models
         public int BrojRezervacije { get; set; }
         public int BrojStola { get; set; }
         public int BrojGostiju { get; set; }
-        public DateTime VremeOd { get; set; }       
-        public DateTime VremeDo { get; set; }       
+        public DateTime VremeOd { get; set; }
+        public DateTime VremeDo { get; set; }
         public bool JeAktivna { get; set; }
 
-         
+
         public DateTime VremeRezervacije => VremeOd;
         public DateTime VremeIsteka => VremeDo;
 

@@ -63,7 +63,7 @@ namespace Server
                 int idKonobara = int.Parse(delovi[2]);
                 string tipPorudzbine = delovi[3];
 
-                
+
                 var sto = RepozitorijumStolova.DobaviPoId(brStola);
                 if (sto != null && sto.Porudzbine != null)
                 {
@@ -101,30 +101,49 @@ namespace Server
                 int brojStola = int.Parse(delovi[2]);
                 Sto sto = DeserijalizujSto(delovi[3]);
 
-                 
+
                 var postojeciSto = RepozitorijumStolova.DobaviPoId(brojStola);
                 if (postojeciSto != null)
                 {
-                    sto.Stanje = postojeciSto.Stanje;
-                    sto.ZauzeoKonobar = postojeciSto.ZauzeoKonobar;
+                    // Dodaj SAMO nove porudžbine (one sa statusom priprema) u postojeći sto.
+                    // Konobar šalje Sto koji sadrži samo nove stavke (stare su očišćene).
+                    var noveStavke = sto.Porudzbine
+                        .Where(p => p.statusArtikla == StatusArtikla.priprema)
+                        .ToList();
 
-                     
-                    foreach (var nova in sto.Porudzbine)
+                    foreach (var nova in noveStavke)
                     {
                         postojeciSto.Porudzbine.Add(nova);
                     }
-                    sto.Porudzbine = postojeciSto.Porudzbine;
+
+                    postojeciSto.ZauzeoKonobar = idKonobara;
+                    RepozitorijumStolova.AzurirajSto(postojeciSto);
+
+                    Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("ORDER primljen (Sto {0}, Konobar {1}, {2} novih stavki)", brojStola, idKonobara, noveStavke.Count));
+
+                    Thread.Sleep(1000);
+
+                    if (noveStavke.Any())
+                    {
+                        servisPripreme.PosaljiPorudzbinu(idKonobara, brojStola, noveStavke);
+                    }
                 }
-                 
+                else
+                {
+                    // Sto ne postoji na serveru — koristi ceo primljeni sto
+                    RepozitorijumStolova.AzurirajSto(sto);
+                    Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("ORDER primljen (Sto {0}, Konobar {1}, {2} stavki)", brojStola, idKonobara, sto.Porudzbine.Count));
 
-                RepozitorijumStolova.AzurirajSto(sto);
-                Server.UI.ServerVizualizacija.DodajDogadjaj(string.Format("ORDER primljen (Sto {0}, Konobar {1}, {2} stavki)", brojStola, idKonobara, sto.Porudzbine.Count));
+                    Thread.Sleep(1000);
+                    var novePorudzbine = sto.Porudzbine
+                        .Where(p => p.statusArtikla == StatusArtikla.priprema)
+                        .ToList();
 
-                Thread.Sleep(1000);
-                foreach (Porudzbina p in RepozitorijumStolova.DobaviPoId(brojStola).Porudzbine)
-                    p.statusArtikla = StatusArtikla.priprema;
-
-                servisPripreme.PosaljiPorudzbinu(idKonobara, sto.BrojStola, sto.Porudzbine);
+                    if (novePorudzbine.Any())
+                    {
+                        servisPripreme.PosaljiPorudzbinu(idKonobara, sto.BrojStola, novePorudzbine);
+                    }
+                }
             }
         }
 
@@ -146,7 +165,7 @@ namespace Server
 
                 Kategorija tip = tipString == "hrane" ? Kategorija.hrana : Kategorija.pice;
 
-                 
+
                 var porudzbineZaDostavu = sto.Porudzbine
                     .Where(p => p.KategorijaArtikla == tip && p.statusArtikla == StatusArtikla.spremno)
                     .ToList();
@@ -155,7 +174,7 @@ namespace Server
                 {
                     p.statusArtikla = StatusArtikla.dostavljeno;
                 }
- 
+
                 RepozitorijumStolova.AzurirajSto(sto);
 
                 Server.UI.ServerVizualizacija.DodajDogadjaj(
