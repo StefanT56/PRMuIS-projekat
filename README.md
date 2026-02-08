@@ -157,9 +157,4 @@ Clients
 - Konkurentne kolekcije (ConcurrentDictionary, BlockingCollection)
 - Multi-threading
 
-## Napomene
 
-- Mrežna logika je u potpunosti zadržana iz originalnog projekta
-- Arhitektura je reorganizovana prema Clean Architecture principima
-- Repozitorijumi su premešteni u Infrastructure sloj
-- Sva imena su promenjena kako bi se izbeglo prepoznavanje originalnog koda
