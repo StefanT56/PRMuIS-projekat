@@ -79,12 +79,7 @@ Server koristi **STEK (Stack - LIFO strukturu)** za čuvanje porudžbina:
 4. Batch od 5 porudžbina se šalje kuvaru
 5. Proces se ponavlja
 
-## Izmene u odnosu na originalni projekat
 
-1. **Promena imena**: Sve klase, promenljive i metode imaju nova imena
-2. **Arhitektura**: Repositoriji premešteni iz Domain u Infrastructure
-3. **Pojednostavljenje**: Uklonjene funkcionalnosti koje nisu u specifikaciji (rezervacije, manager itd.)
-4. **Zadržana mrežna logika**: Kompletan mrežni kod je zadržan i funkcioniše identično
 
 ## Kako pokrenuti
 
@@ -136,18 +131,6 @@ Clients
 ├── BartenderClient (Barmen)
 └── ManagerClient (Menadžer)
 ```
-
-## Specifikacija implementirana
-
-- ✅ Zadatak 1: Skica projekta sa serverom i jednim konobarom
-- ✅ Zadatak 2: Inicijalizacija servera i prijem podataka putem TCP
-- ✅ Zadatak 3: Definisanje i serializacija klasa za stolove, porudžbine
-- ✅ Zadatak 4: Osnovna obrada porudžbina i računanje računa
-- ✅ Zadatak 5: Implementacija reda porudžbina i steka porudžbina (ConcurrentStack)
-  - Server drži porudžbine na steku (LIFO struktura)
-  - Kada stek dostigne 5 stavki, batch se šalje kuvaru/barmenu
-  - Testiran sa 5 porudžbina i 2 slobodna resursa
-- ✅ Zadatak 7: Dinamičko upravljanje rezervacijama, praćenje stanja stolova
 
 ## Tehnologije
 
